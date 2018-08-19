@@ -12,11 +12,11 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	_ "net/http/pprof"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
@@ -652,25 +652,34 @@ func postProfile(c echo.Context) error {
 			return ErrBadReqeust
 		}
 
-		file, err := fh.Open()
+		tmp, err := fh.Open()
 		if err != nil {
 			return err
 		}
-		avatarData, _ = ioutil.ReadAll(file)
-		file.Close()
+		avatarData, _ = ioutil.ReadAll(tmp)
+		tmp.Close()
 
 		if len(avatarData) > avatarMaxBytes {
 			return ErrBadReqeust
 		}
 
 		avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
-	}
 
-	if avatarName != "" && len(avatarData) > 0 {
-		_, err := db.Exec("INSERT INTO image (name, data) VALUES (?, ?)", avatarName, avatarData)
+		file, err := os.Create(fmt.Sprintf(`/home/isucon/static/%s`, avatarName))
 		if err != nil {
 			return err
 		}
+		defer file.Close()
+
+		file.Write(avatarData)
+	}
+
+	if avatarName != "" && len(avatarData) > 0 {
+		// _, err := db.Exec("INSERT INTO image (name, data) VALUES (?, ?)", avatarName, avatarData)
+		// if err != nil {
+		// 	return err
+		// }
+
 		_, err = db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?", avatarName, self.ID)
 		if err != nil {
 			return err
