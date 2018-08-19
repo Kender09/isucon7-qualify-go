@@ -665,7 +665,7 @@ func postProfile(c echo.Context) error {
 
 		avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
 
-		file, err := os.Create(fmt.Sprintf(`/home/isucon/static/%s`, avatarName))
+		file, err := os.Create(fmt.Sprintf(`/home/isucon/static/icons/%s`, avatarName))
 		if err != nil {
 			return err
 		}
