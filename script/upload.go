@@ -4,13 +4,11 @@ import (
 	crand "crypto/rand"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
-	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,7 +17,7 @@ const (
 )
 
 var (
-	db            *sqlx.DB
+	db *sqlx.DB
 )
 
 func init() {
@@ -27,39 +25,20 @@ func init() {
 	crand.Read(seedBuf)
 	rand.Seed(int64(binary.LittleEndian.Uint64(seedBuf)))
 
-	db_host := os.Getenv("ISUBATA_DB_HOST")
-	if db_host == "" {
-		db_host = "127.0.0.1"
-	}
-	db_port := os.Getenv("ISUBATA_DB_PORT")
-	if db_port == "" {
-		db_port = "3306"
-	}
-	db_user := os.Getenv("ISUBATA_DB_USER")
-	if db_user == "" {
-		db_user = "root"
-	}
-	db_password := os.Getenv("ISUBATA_DB_PASSWORD")
-	if db_password != "" {
-		db_password = ":" + db_password
-	}
+	db_host := "localhost"
+	db_port := "3306"
+	db_user := "isucon"
+	db_password := ":isucon"
 
-	dsn := fmt.Sprintf("%s%s@tcp(%s:%s)/isubata?parseTime=true&loc=Local&charset=utf8mb4",
+	dsn := fmt.Sprintf("%s%s@tcp(%s:%s)/isubata",
 		db_user, db_password, db_host, db_port)
 
 	log.Printf("Connecting to db: %q", dsn)
-	db, _ = sqlx.Connect("mysql", dsn)
-	for {
-		err := db.Ping()
-		if err == nil {
-			break
-		}
-		log.Println(err)
-		time.Sleep(time.Second * 3)
+	var err error
+	db, err = sqlx.Connect("mysql", dsn)
+	if err != nil {
+		log.Printf("Connecting to error: %s", err)
 	}
-
-	db.SetMaxOpenConns(20)
-	db.SetConnMaxLifetime(5 * time.Minute)
 	log.Printf("Succeeded to connect db.")
 }
 
@@ -85,10 +64,11 @@ func writeIcons() error {
 
 		file.Write(data)
 	}
+	return nil
 }
 
 func main() {
-	if err := writeIcons(); err != {
+	if err := writeIcons(); err != nil {
 		log.Printf("err: %s", err)
 	}
 }
