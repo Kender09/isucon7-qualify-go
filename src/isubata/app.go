@@ -33,6 +33,7 @@ const (
 var (
 	db            *sqlx.DB
 	ErrBadReqeust = echo.NewHTTPError(http.StatusBadRequest)
+	messages      = make(map[string]string)
 )
 
 type Renderer struct {
@@ -212,7 +213,7 @@ func getInitialize(c echo.Context) error {
 	db.MustExec("DELETE FROM image WHERE id > 1001")
 	db.MustExec("DELETE FROM channel WHERE id > 10")
 	db.MustExec("DELETE FROM message WHERE id > 10000")
-	db.MustExec("DELETE FROM haveread")
+	// db.MustExec("DELETE FROM haveread")
 	return c.String(204, "")
 }
 
@@ -402,13 +403,14 @@ func getMessage(c echo.Context) error {
 	}
 
 	if len(messages) > 0 {
-		_, err := db.Exec("INSERT INTO haveread (user_id, channel_id, message_id, updated_at, created_at)"+
-			" VALUES (?, ?, ?, NOW(), NOW())"+
-			" ON DUPLICATE KEY UPDATE message_id = ?, updated_at = NOW()",
-			userID, chanID, messages[0].ID, messages[0].ID)
-		if err != nil {
-			return err
-		}
+		messages[string(user_id) + ":" + string(channel_id)] = user_id
+		// _, err := db.Exec("INSERT INTO haveread (user_id, channel_id, message_id, updated_at, created_at)"+
+		// 	" VALUES (?, ?, ?, NOW(), NOW())"+
+		// 	" ON DUPLICATE KEY UPDATE message_id = ?, updated_at = NOW()",
+		// 	userID, chanID, messages[0].ID, messages[0].ID)
+		// if err != nil {
+		// 	return err
+		// }
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -421,24 +423,27 @@ func queryChannels() ([]int64, error) {
 }
 
 func queryHaveRead(userID, chID int64) (int64, error) {
-	type HaveRead struct {
-		UserID    int64     `db:"user_id"`
-		ChannelID int64     `db:"channel_id"`
-		MessageID int64     `db:"message_id"`
-		UpdatedAt time.Time `db:"updated_at"`
-		CreatedAt time.Time `db:"created_at"`
-	}
-	h := HaveRead{}
+	// type HaveRead struct {
+	// 	UserID    int64     `db:"user_id"`
+	// 	ChannelID int64     `db:"channel_id"`
+	// 	MessageID int64     `db:"message_id"`
+	// 	UpdatedAt time.Time `db:"updated_at"`
+	// 	CreatedAt time.Time `db:"created_at"`
+	// }
+	// h := HaveRead{}
 
-	err := db.Get(&h, "SELECT * FROM haveread WHERE user_id = ? AND channel_id = ?",
-		userID, chID)
+	// err := db.Get(&h, "SELECT * FROM haveread WHERE user_id = ? AND channel_id = ?",
+	// 	userID, chID)
 
-	if err == sql.ErrNoRows {
-		return 0, nil
-	} else if err != nil {
-		return 0, err
-	}
-	return h.MessageID, nil
+	// if err == sql.ErrNoRows {
+	// 	return 0, nil
+	// } else if err != nil {
+	// 	return 0, err
+	// }
+	// return h.MessageID, nil
+
+	key := fmt.Sprintf("%d:%d", userID, chID)
+	return messages[key]
 }
 
 func fetchUnread(c echo.Context) error {
