@@ -444,7 +444,11 @@ func queryHaveRead(userID, chID int64) (int64, error) {
 	// return h.MessageID, nil
 
 	key := fmt.Sprintf("%d:%d", userID, chID)
-	return haveRead[key], nil
+	res, ok := haveRead[key]
+	if ok {
+		return res, nil
+	}
+	return 0, nil
 }
 
 func fetchUnread(c echo.Context) error {
@@ -453,7 +457,7 @@ func fetchUnread(c echo.Context) error {
 		return c.NoContent(http.StatusForbidden)
 	}
 
-	time.Sleep(time.Second)
+	// time.Sleep(time.Second)
 
 	channels, err := queryChannels()
 	if err != nil {
