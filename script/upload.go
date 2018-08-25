@@ -56,7 +56,7 @@ func writeIcons() error {
 			return err
 		}
 
-		file, err := os.Create(fmt.Sprintf(`/home/isucon/static/%s`, name))
+		file, err := os.Create(fmt.Sprintf(`/home2/isucon/static/%s`, name))
 		if err != nil {
 			return err
 		}
