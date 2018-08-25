@@ -33,7 +33,7 @@ const (
 var (
 	db            *sqlx.DB
 	ErrBadReqeust = echo.NewHTTPError(http.StatusBadRequest)
-	messages      = make(map[string]string)
+	haveRead      = make(map[string]int64)
 )
 
 type Renderer struct {
@@ -403,7 +403,8 @@ func getMessage(c echo.Context) error {
 	}
 
 	if len(messages) > 0 {
-		messages[string(user_id) + ":" + string(channel_id)] = user_id
+		key := fmt.Sprintf("%d:%d", userID, chanID)
+		haveRead[key] = messages[0].ID
 		// _, err := db.Exec("INSERT INTO haveread (user_id, channel_id, message_id, updated_at, created_at)"+
 		// 	" VALUES (?, ?, ?, NOW(), NOW())"+
 		// 	" ON DUPLICATE KEY UPDATE message_id = ?, updated_at = NOW()",
@@ -443,7 +444,7 @@ func queryHaveRead(userID, chID int64) (int64, error) {
 	// return h.MessageID, nil
 
 	key := fmt.Sprintf("%d:%d", userID, chID)
-	return messages[key]
+	return haveRead[key], nil
 }
 
 func fetchUnread(c echo.Context) error {
